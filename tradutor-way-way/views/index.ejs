@@ -18,7 +18,9 @@
       <button id="btnTraduzir">Traduzir</button>
       <br>
       <div id="messageNaoLogado"></div>
-      <button class="btn-sugerir" onclick="mostrarFormularioSugestao()">Sugerir Novo Termo</button>
+      <% if (session && session.usuario && session.usuario.id && session.usuario.modoConta !=='tradutor' && session.usuario.modoConta !== 'admin') { %>
+        <button class="btn-sugerir" onclick="mostrarFormularioSugestao()">Sugerir Novo Termo</button>
+      <% } %>
     </section>
   
     <section class="section" id="i-sugerir" hidden>

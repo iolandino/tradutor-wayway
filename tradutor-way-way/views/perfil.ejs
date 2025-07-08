@@ -55,9 +55,9 @@
         <br>
         <button onclick="alterarSenha()">Alterar Senha</button>
         <% if (usuario.tipos.includes('admin')) { %>
-            <button onclick="desvincularAdmin()">Não quero ser Administrador</button>
-        <% } %>
-        <% if (usuario.tipos.includes('tradutor')) { %>
+            <button onclick="mostrarFormDesvincularAdmin()">Não quero ser Administrador</button>
+            <p style="text-align: justify; font-size: 14px;"><strong>Obs.:</strong> Para excluir a conta você não deve ser "Tradutor" e nem "Administrador".</p>
+        <% } else if (usuario.tipos.includes('tradutor')) { %>
             <button onclick="desvincularTradutor()">Não quero ser Tradutor</button>
             <p style="text-align: justify; font-size: 14px;"><strong>Obs.:</strong> Para excluir a conta você não deve ser "Tradutor" e nem "Administrador".</p>
         <% } else { %>
@@ -86,6 +86,18 @@
         </form>
     </section>
 
+    <section class="perfil-contain" id="desvincular-adm" hidden>
+      <h2>Solicitação para Deixar de Ser Administrador</h2>
+      <br>
+      <form id="formDesvinculoAdm">
+        <label for="justificativaDesvinculo">Justificativa:</label>
+        <textarea id="justificativaDesvinculo" rows="6" placeholder="Explique por que deseja deixar de ser administrador. (mínimo: 10 caracteres)"></textarea>
+        <br>
+        <button type="submit">Enviar Solicitação</button>
+        <button type="button" onclick="cancelarDesvinculoAdm()">Cancelar</button>
+      </form>
+    </section>
+
     <section class="meus-termos-sugeridos" id="termos-sugeridos">
       <h2>Minhas Sugestões</h2>
       <br>
@@ -99,7 +111,6 @@
                 <th>Wai Wai</th>
                 <th>Descrição</th>
                 <th>Status</th>
-                <th>Mensagem</th>
               </tr>
             </thead>
             <tbody>
@@ -117,9 +128,7 @@
                       <span style="color: red;">Rejeitada</span>
                     <% } %>
                   </td>
-                        
-                      
-                  <td><%= s.mensagemAvaliador %></td>
+                  <td><%= s.mensagemAvaliador || '-' %></td>
                 </tr>
               <% }) %>
             </tbody>

@@ -56,15 +56,15 @@ async function removerTermo(id) {
 
 // Abrir Modal de Aprovação de Solicitacão
 function aprovarSolicitacao(id) {
-  document.getElementById("sugestaoIdAprovar").value = id;
-  document.getElementById("mensagemAprovar").value = "";
+  document.getElementById("solicitacaoIdAprovar").value = id;
+  document.getElementById("mensagemAprovarSolicitacao").value = "";
   document.getElementById("aprovar-solicitacao").hidden = false;
 }
 
 // Abrir Modal de Rejeição de Solicitacão
 function rejeitarSolicitacao(id) {
-  document.getElementById("sugestaoIdRejeitar").value = id;
-  document.getElementById("mensagemRejeitar").value = "";
+  document.getElementById("solicitacaoIdRejeitar").value = id;
+  document.getElementById("mensagemRejeitarSolicitacao").value = "";
   document.getElementById("rejeitar-solicitacao").hidden = false;
 }
 
@@ -73,6 +73,61 @@ function aprovarSugestao(id) {
   document.getElementById("sugestaoIdAprovar").value = id;
   document.getElementById("mensagemAprovar").value = "";
   document.getElementById("aprovar-sugestao").hidden = false;
+}
+
+// Abrir Modal de Rejeição de Sugestão
+function rejeitarSugestao(id) {
+  document.getElementById("sugestaoIdRejeitar").value = id;
+  document.getElementById("mensagemRejeitar").value = "";
+  document.getElementById("rejeitar-sugestao").hidden = false;
+}
+
+// Confirmar Solicitação
+async function confirmarSolicitacao() {
+  const id = document.getElementById("solicitacaoIdAprovar").value;
+  const mensagem = document.getElementById("mensagemAprovarSolicitacao").value;
+
+  try {
+    const res = await fetch(`/admin/${id}/aprovar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mensagem })
+    });
+
+    const data = await res.json();
+    alert(data.mensagem);
+    if (data.sucesso) {
+      fecharModal('aprovar-solicitacao');
+      location.reload();
+    }
+  } catch (err) {
+    console.error("Erro ao aprovar solicitação:", err);
+    alert("Erro ao processar a solicitação. Tente novamente.");
+  }
+}
+
+// Rejeitar Solicitação
+async function recusarSolicitacao() {
+  const id = document.getElementById("solicitacaoIdRejeitar").value;
+  const mensagem = document.getElementById("mensagemRejeitarSolicitacao").value;
+  
+  try {
+    const res = await fetch(`/admin/${id}/rejeitar`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mensagem })
+    });
+
+    const data = await res.json();
+    alert(data.mensagem);
+    if (data.sucesso) {
+      fecharModal('rejeitar-solicitacao');
+      location.reload();
+    }
+  } catch (err) {
+    console.error("Erro ao rejeitar solicitação:", err);
+    alert("Erro ao rejeitar a solicitação. Tente novamente.");
+  }
 }
 
 // Confirmar aprovação
@@ -89,13 +144,6 @@ async function confirmarAprovacao() {
   const data = await res.json();
   alert(data.mensagem);
   if (data.sucesso) location.reload();
-}
-
-// Abrir Modal de Rejeição de Sugestão
-function rejeitarSugestao(id) {
-  document.getElementById("sugestaoIdRejeitar").value = id;
-  document.getElementById("mensagemRejeitar").value = "";
-  document.getElementById("rejeitar-sugestao").hidden = false;
 }
 
 // Confirmar rejeição
@@ -117,4 +165,28 @@ async function confirmarRejeicao() {
 // Fechar modal de aprovação/rejeição de sugestões
 function fecharModal(idModal) {
   document.getElementById(idModal).hidden = true;
+}
+
+async function aprovarDesvinculoAdmin(id) {
+  if (!confirm("Você confirma que deseja aprovar o desligamento deste administrador?")) return;
+
+  try {
+    const res = await fetch(`/admin/desvinculo-aprovar/${id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    const data = await res.json();
+    alert(data.mensagem);
+
+    if (data.sucesso) {
+      location.reload();
+    }
+
+  } catch (err) {
+    console.error("Erro ao aprovar desligamento:", err);
+    alert("Erro ao processar a solicitação. Tente novamente.");
+  }
 }

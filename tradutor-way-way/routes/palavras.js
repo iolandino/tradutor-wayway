@@ -23,12 +23,12 @@ router.post('/', VerificarAutenticacao, async (req, res) => {
       waiwai,
       descricao,
       criadoPor: req.session.usuario.id,
-      aprovado: false
+      aprovado: true
     });
 
     await novaPalavra.save();
 
-    res.json({ sucesso: true, mensagem: 'Termo cadastrado com sucesso. Aguardando aprovação.' });
+    res.json({ sucesso: true, mensagem: 'Termo cadastrado com sucesso.' });
   } catch (err) {
     console.error('Erro ao cadastrar termo:', err);
     res.status(500).json({ sucesso: false, mensagem: 'Erro ao cadastrar termo.' });

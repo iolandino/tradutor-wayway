@@ -86,4 +86,78 @@ router.put('/alterar-senha', VerificarAutenticacao, async (req, res) => {
   }
 });
 
+router.post('/solicitar-tradutor', VerificarAutenticacao, async (req, res) => {
+  try {
+    const jaSolicitou = await Solicitacao.findOne({
+      solicitadoPor: req.session.usuario.id,
+      status: 'pendente'
+    });
+
+    if (jaSolicitou) {
+      return res.status(400).json({ sucesso: false, mensagem: 'Você já possui uma solicitação pendente.' });
+    }
+
+    const novaSolicitacao = new Solicitacao({
+      solicitadoPor: req.session.usuario.id
+    });
+
+    await novaSolicitacao.save();
+
+    res.json({ sucesso: true, mensagem: 'Solicitação enviada com sucesso.' });
+  } catch (err) {
+    console.error("Erro ao enviar solicitação:", err);
+    res.status(500).json({ sucesso: false, mensagem: 'Erro ao enviar solicitação.' });
+  }
+});
+
+router.delete('/excluir-conta', VerificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.session.usuario.id);
+
+    if (!usuario) {
+      return res.status(404).json({ sucesso: false, mensagem: 'Usuário não encontrado.' });
+    }
+
+    // Verifica se o usuário ainda é tradutor ou admin
+    if (usuario.tipos.includes('tradutor') || usuario.tipos.includes('admin')) {
+      return res.status(403).json({ sucesso: false, mensagem: 'Você deve deixar de ser Tradutor/Admin antes de excluir a conta.' });
+    }
+
+    await Usuario.findByIdAndDelete(usuario._id);
+    req.session.destroy();
+
+    res.json({ sucesso: true, mensagem: 'Conta excluída com sucesso.' });
+  } catch (err) {
+    console.error("Erro ao excluir conta:", err);
+    res.status(500).json({ sucesso: false, mensagem: 'Erro interno ao excluir conta.' });
+  }
+});
+
+router.put('/remover-tradutor', VerificarAutenticacao, async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.session.usuario.id);
+
+    if (!usuario) {
+      return res.status(404).json({ sucesso: false, mensagem: 'Usuário não encontrado.' });
+    }
+
+    if (usuario.tipos.includes('admin')) {
+      return res.status(403).json({
+        sucesso: false,
+        mensagem: 'Administradores não podem se desvincular como tradutores. Você deve deixar de ser Admin antes de excluir a conta.'
+      });
+    }
+
+    usuario.tipos = usuario.tipos.filter(t => t !== 'tradutor');
+    await usuario.save();
+
+    req.session.usuario.tipos = usuario.tipos;
+
+    res.json({ sucesso: true, mensagem: 'Você não é mais um tradutor.' });
+  } catch (err) {
+    console.error('Erro ao remover tradutor:', err);
+    res.status(500).json({ sucesso: false, mensagem: 'Erro ao atualizar o perfil.' });
+  }
+});
+
 module.exports = router;

@@ -102,33 +102,107 @@ document.getElementById('formEditarSenha').addEventListener('submit', async (e) 
   }
 });
 
-function solicitarTradutor() {
-  if (!confirm("Tem certeza que deseja solicitar para se tornar Tradutor?")) return;
+async function solicitarTradutor() {
+  if (!confirm("Tem certeza que deseja solicitar para se tornar um Tradutor?")) return;
 
-  fetch("/tradutor/solicitar", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-  })
-    .then(res => res.json())
-    .then(data => alert(data.mensagem))
-    .catch(err => {
-      console.error("Erro ao solicitar ser tradutor:", err);
-      alert("Erro ao enviar a solicitação");
+  try {
+    const resposta = await fetch("/perfil/solicitar-tradutor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
     });
+
+    const dados = await resposta.json();
+
+    alert(dados.mensagem);
+
+    if (dados.sucesso) location.reload();
+  } catch (erro) {
+    console.error("Erro ao solicitar tradutor:", erro);
+    alert("Erro ao enviar solicitação.");
+  }
 }
 
-function excluirConta() {
-  if (!confirm("Deseja realmente excluir sua conta? Esta ação é irreversível.")) return;
+async function excluirConta() {
+  const confirmacao = confirm("Tem certeza que deseja excluir sua conta? Essa ação é irreversível!");
 
-  fetch("/perfil/excluir", {
-    method: "DELETE" })
-    .then(res => res.json())
-    .then(data => {
-      alert(data.mensagem);
-      if (data.sucesso) window.location.href = "/";
-    })
-    .catch(err => {
-      console.error("Erro ao excluir conta:", err);
-      alert("Erro ao excluir a conta");
+  if (!confirmacao) return;
+
+  try {
+    const resposta = await fetch("/perfil/excluir-conta", {
+      method: "DELETE",
     });
+
+    const dados = await resposta.json();
+
+    alert(dados.mensagem);
+
+    if (dados.sucesso) {
+      window.location.href = "/login"; // Redireciona para a página inicial ou login
+    }
+  } catch (erro) {
+    console.error("Erro ao excluir conta:", erro);
+    alert("Erro ao tentar excluir sua conta.");
+  }
 }
+
+async function desvincularTradutor() {
+  const confirmar = confirm("Tem certeza que deseja deixar de ser Tradutor?");
+  if (!confirmar) return;
+
+  try {
+    const resposta = await fetch("/perfil/remover-tradutor", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const dados = await resposta.json();
+
+    alert(dados.mensagem);
+
+    if (dados.sucesso) {
+      window.location.reload();
+    }
+  } catch (erro) {
+    console.error("Erro ao desvincular tradutor:", erro);
+    alert("Erro ao tentar atualizar tipo de conta.");
+  }
+}
+
+function mostrarFormDesvincularAdmin() {
+  document.getElementById("desvincular-adm").hidden = false;
+  document.getElementById('configurar-conta').hidden = true;
+}
+
+function cancelarDesvinculoAdm() {
+  document.getElementById("desvincular-adm").hidden = true;
+  document.getElementById('configurar-conta').hidden = false;
+  document.getElementById('justificativaDesvinculo').value.trim() = '';
+}
+
+document.getElementById("formDesvinculoAdm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const justificativa = document.getElementById("justificativaDesvinculo").value.trim();
+  if (justificativa.length < 10) {
+    alert("A justificativa deve conter no mínimo 10 caracteres.");
+    return;
+  }
+
+  try {
+    const res = await fetch("/admin/solicitar-desvinculo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ justificativa })
+    });
+
+    const data = await res.json();
+    alert(data.mensagem);
+
+    if (data.sucesso) {
+      location.reload();
+    }
+  } catch (err) {
+    console.error("Erro ao solicitar desligamento:", err);
+    alert("Erro ao enviar solicitação.");
+  }
+});

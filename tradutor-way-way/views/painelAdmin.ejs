@@ -17,23 +17,26 @@
                     <td><%= u.tipos.join(', ') %></td>
                     <td>
                         <% if (u.id !== admin.id) { %>
-                            <% if (!u.tipos.includes('admin')) { %>
-                                <form method="post" action="/admin/promover/<%= u._id %>" style="display:inline">
-                                    <button type="submit">Tornar Admin</button>
-                                </form>
-                            <% } else { %>
-                                <form method="post" action="/admin/rebaixar/<%= u._id %>" style="display:inline">
+                            <% if (u.tipos.includes('admin')) { %>
+                                <!-- Já é admin, pode apenas remover -->
+                                <form method="post" action="/admin/rebaixar-admin/<%= u._id %>" style="display:inline">
                                     <button type="submit">Remover Admin</button>
                                 </form>
-                            <% } %>
-                            <% if (!u.tipos.includes('tradutor')) { %>
-                                <form method="post" action="/admin/promover/<%= u._id %>" style="display:inline">
-                                    <button type="submit">Tornar Tradutor</button>
-                                </form>
                             <% } else { %>
-                                <form method="post" action="/admin/rebaixar/<%= u._id %>" style="display:inline">
-                                    <button type="submit">Remover Tradutor</button>
+                                <!-- Não é admin, mostrar opção de promover -->
+                                <form method="post" action="/admin/promover-admin/<%= u._id %>" style="display:inline">
+                                    <button type="submit">Tornar Admin</button>
                                 </form>
+                                <!-- Somente se não for admin, mostrar botões de tradutor -->
+                                <% if (!u.tipos.includes('tradutor')) { %>
+                                    <form method="post" action="/admin/promover-tradutor/<%= u._id %>" style="display:inline">
+                                        <button type="submit">Tornar Tradutor</button>
+                                    </form>
+                                <% } else { %>
+                                    <form method="post" action="/admin/rebaixar-tradutor/<%= u._id %>" style="display:inline">
+                                        <button type="submit">Remover Tradutor</button>
+                                    </form>
+                                <% } %>
                             <% } %>
                         <% } %>
                     </td>
@@ -43,7 +46,7 @@
 
         <br><br><hr><br><br>
 
-        <h2>Solicitações para Tradutor</h2>
+        <h2>Solicitações pendentes para Tradutor</h2>
         <% if (solicitacoesPendentes.length === 0) { %>
             <p>Nenhuma solicitação pendente.</p>
         <% } else { %>
@@ -83,6 +86,8 @@
                         <th>Data da Solicitação</th>
                         <th>Status</th>
                         <th>Mensagem</th>
+                        <th>Avaliada por</th>
+                        <th>Data da Avaliação</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -97,9 +102,121 @@
                                     <span style="color: red;">Rejeitada</span>
                                 <% } else if (s.status === 'pendente') { %>
                                     <span style="color: orange;">Pendente</span>
+                                <% } else if (s.status === 'cancelada') { %>
+                                    <span style="color: gray;">Cancelada</span>
                                 <% } %>
                             </td>
                             <td><%= s.mensagemAdmin || '-' %></td>
+                            <td><%= s.avaliadoPor?.nome || '-' %></td>
+                            <td>
+                                <% if (s.status === 'aprovada' || s.status === 'rejeitada') { %>
+                                    <%= s.dataAvaliacao.toLocaleDateString() || '-' %>
+                                <% } else if (s.status === 'cancelada') { %>
+                                    <%= s.dataCancelamento?.toLocaleDateString() || '-' %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } %>
+
+        <br><br><hr><br><br>
+        
+        <h2>Solicitações de Desvinculação de Administrador (Pendentes)</h2>
+        <% if (desvinculosAdminPendentes.length === 0) { %>
+            <p>Nenhuma solicitação pendente.</p>
+        <% } else { %>
+            <table class="tabela-sugestoes">
+                <thead>
+                    <tr>
+                        <th>Solicitante</th>
+                        <th>Justificativa</th>
+                        <th>Data</th>
+                        <th>Aprovações</th>
+                        <th>Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% desvinculosAdminPendentes.forEach(s => { %>
+                        <tr>
+                            <td><%= s.solicitante?.nome %></td>
+                            <td><%= s.justificativa %></td>
+                            <td><%= s.dataSolicitacao.toLocaleDateString() %></td>
+                            <td>
+                                <% s.aprovadores.forEach(ap => { %>
+                                    <div>
+                                        <%= ap.admin?.nome %>: 
+                                        <% if (ap.aprovou) { %>
+                                          ✅
+                                        <% } else { %>
+                                          ⏳
+                                        <% } %>
+                                    </div>
+                                <% }) %>
+                            </td>
+                            <td>
+                                <% const aprovador = s.aprovadores.find(ap => ap.admin && ap.admin._id.toString() === admin._id.toString()); %>
+                                <% if (aprovador && !aprovador.aprovou) { %>
+                                    <button onclick="aprovarDesvinculoAdmin('<%= s._id %>')">✅ Aprovar</button>
+                                <% } else if (aprovador && aprovador.aprovou) { %>
+                                    <span>Você já aprovou</span>
+                                <% } else { %>
+                                    <span>Você não é avaliador</span>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        <% } %>
+
+        <br><hr><br>
+
+        <h2>Solicitações de Desvinculação de Administrador (Todas) </h2>
+
+        <% if (desvinculosAdmin.length === 0) { %>
+            <p>Nenhuma solicitação de desvinculação ativa.</p>
+        <% } else { %>
+            <table class="tabela-sugestoes">
+                <thead>
+                    <tr>
+                        <th>Solicitante</th>
+                        <th>Justificativa</th>
+                        <th>Status</th>
+                        <th>Data</th>
+                        <th>Aprovações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% desvinculosAdmin.forEach(d => { %>
+                        <tr>
+                            <td><%= d.solicitante?.nome || 'Desconhecido' %></td>
+                            <td><%= d.justificativa %></td>
+                            <td>
+                                <% if (d.status === 'aprovada') { %>
+                                  <span style="color: green;">Aprovada</span>
+                                <% } else if (d.status === 'rejeitada') { %>
+                                  <span style="color: red;">Rejeitada</span>
+                                <% } else { %>
+                                <span style="color: orange;">Pendente</span>
+                                <% } %>
+                            </td>
+                            <td><%= d.dataSolicitacao.toLocaleDateString() %></td>
+                            <td>
+                                <% d.aprovadores.forEach(ap => { %>
+                                    <div>
+                                        <%= ap.admin?.nome %>: 
+                                            <% if (ap.aprovou) { %>
+                                                ✅
+                                            <% } else { %>
+                                                ⏳
+                                            <% } %>
+                                    </div>
+                                <% }) %>
+                            </td>
                         </tr>
                     <% }) %>
                 </tbody>
