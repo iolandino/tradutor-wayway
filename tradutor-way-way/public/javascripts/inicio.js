@@ -101,6 +101,9 @@ async function submitSuggestion() {
 
     const dados = await resposta.json();
     messageDiv.textContent = dados.mensagem;
+    document.getElementById('suggestPt').value = '';
+    document.getElementById('suggestWai').value = '';
+    document.getElementById('suggestDescricao').value = '';
   } catch (erro) {
     console.error('Erro ao sugerir termo:', erro);
     messageDiv.textContent = "Erro ao enviar sugestão.";
@@ -128,6 +131,9 @@ async function cadastrarTermo() {
 
     const dados = await resposta.json();
     document.getElementById('messageCadastrado').innerText = dados.mensagem;
+    document.getElementById('cadastrarPt').value = '';
+    document.getElementById('cadastrarWai').value = '';
+    document.getElementById('cadastrarDescricao').value = '';
   } catch (erro) {
     console.error('Erro ao cadastrar termo:', erro);
     document.getElementById('messageCadastrado').innerText = 'Erro ao cadastrar o termo.';
